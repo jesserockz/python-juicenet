@@ -5,8 +5,8 @@ import time
 import requests
 
 class Api:
-
-    BASE_URL = "http://emwjuicebox.cloudapp.net"
+    # URL from the official API documentation:
+    BASE_URL = "https://jbv1-api.emotorwerks.com"
 
     def __init__(self, api_token):
         self.api_token = api_token
@@ -51,7 +51,44 @@ class Api:
                                  headers=headers)
         response_json = response.json()
         return response_json
+    
+    def get_info(self, charger):
+        data = {
+            "device_id": self.uuid,
+            "cmd": "get_info",
+            "token": charger.token(),
+            "account_token": self.api_token
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
 
+        response = requests.post("{}/box_api_secure".format(self.BASE_URL),
+                                 data=json.dumps(data),
+                                 headers=headers)
+        response_json = response.json()
+        return response_json
+
+    def set_override(self, charger, override_time, energy_at_plugin, energy_to_add):
+        data = {
+            "device_id": self.uuid,
+            "cmd": "set_override",
+            "token": charger.token(),
+            "account_token": self.api_token,
+            "override_time": override_time,
+            "energy_at_plugin": energy_at_plugin,
+            "energy_to_add": energy_to_add
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post("{}/box_api_secure".format(self.BASE_URL),
+                                 data=json.dumps(data),
+                                 headers=headers)
+        response_json = response.json()
+        return response_json
 
 class Charger:
     def __init__(self, json_settings, api):
@@ -76,7 +113,7 @@ class Charger:
         self.last_updated_at = time.time()
         json_state = self.api.get_device_state(self)
         self.json_state = json_state
-        return True
+        return json_state["success"]
 
     def getVoltage(self):
         return self.json_state.get("charging").get("voltage")
@@ -98,3 +135,29 @@ class Charger:
 
     def getEnergyAdded(self):
         return self.json_state.get("charging").get("wh_energy")
+    
+    def getOverrideTime(self):
+        return self.json_state.get("override_time")
+
+    def setOverride(self, charge_now):
+        override_time = 0
+        energy_at_plugin = 0
+        energy_to_add = 0
+
+        if charge_now:
+            # To enter the "Charge Now" state, override_time should be set to a time in the past.
+            # Otherwise, it simply sets the target time the vehicle should be charged by.
+            # Through experiment, it appears that override_time expects the timestamp 
+            # in the timezone of the unit, so we will simply set override_time to the 
+            # last known unit_time from the json_state.
+
+            # First, (re)load state in case it's empty or stale
+            self.update_state()
+            override_time = self.json_state["unit_time"]
+            # energy_to_add actually comes from your vehicle configuration.  Since we don't
+            # know the charge state of the vehicle, this is normally the complete
+            # battery capacity of the vehicle.
+            energy_to_add = self.json_state["charging"]["wh_energy_to_add"] 
+
+        override_state = self.api.set_override(self, override_time, energy_at_plugin, energy_to_add)
+        return override_state["success"]
