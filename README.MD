@@ -12,4 +12,6 @@ Access to the Juicenet EVSE charger API
 >>> devices[0].update_state()
 >>> devices[0].getVoltage()
 240
+>>> devices[0].setOverride(True) # Charge the car now ignoring the schedule
+True
 ```
