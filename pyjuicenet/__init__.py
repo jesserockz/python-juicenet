@@ -51,7 +51,7 @@ class Api:
                                  headers=headers)
         response_json = response.json()
         return response_json
-    
+
     def get_info(self, charger):
         data = {
             "device_id": self.uuid,
@@ -135,7 +135,7 @@ class Charger:
 
     def getEnergyAdded(self):
         return self.json_state.get("charging").get("wh_energy")
-    
+
     def getOverrideTime(self):
         return self.json_state.get("override_time")
 
@@ -147,8 +147,8 @@ class Charger:
         if charge_now:
             # To enter the "Charge Now" state, override_time should be set to a time in the past.
             # Otherwise, it simply sets the target time the vehicle should be charged by.
-            # Through experiment, it appears that override_time expects the timestamp 
-            # in the timezone of the unit, so we will simply set override_time to the 
+            # Through experiment, it appears that override_time expects the timestamp
+            # in the timezone of the unit, so we will simply set override_time to the
             # last known unit_time from the json_state.
 
             # First, (re)load state in case it's empty or stale
@@ -157,7 +157,11 @@ class Charger:
             # energy_to_add actually comes from your vehicle configuration.  Since we don't
             # know the charge state of the vehicle, this is normally the complete
             # battery capacity of the vehicle.
-            energy_to_add = self.json_state["charging"]["wh_energy_to_add"] 
+            energy_to_add = self.json_state["charging"]["wh_energy_to_add"]
 
         override_state = self.api.set_override(self, override_time, energy_at_plugin, energy_to_add)
+
+        # Update state again to show current override status
+        self.update_state()
+
         return override_state["success"]
