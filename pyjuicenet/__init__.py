@@ -106,9 +106,9 @@ class Charger:
     def id(self):
         return self.json_settings.get("unit_id")
 
-    def update_state(self):
+    def update_state(self, force=False):
         """ Update state with latest info from API. """
-        if time.time() - self.last_updated_at < 30:
+        if not force and time.time() - self.last_updated_at < 30:
             return True
         self.last_updated_at = time.time()
         json_state = self.api.get_device_state(self)
@@ -152,7 +152,7 @@ class Charger:
             # last known unit_time from the json_state.
 
             # First, (re)load state in case it's empty or stale
-            self.update_state()
+            self.update_state(True)
             override_time = self.json_state["unit_time"]
             # energy_to_add actually comes from your vehicle configuration.  Since we don't
             # know the charge state of the vehicle, this is normally the complete
@@ -162,6 +162,6 @@ class Charger:
         override_state = self.api.set_override(self, override_time, energy_at_plugin, energy_to_add)
 
         # Update state again to show current override status
-        self.update_state()
+        self.update_state(True)
 
         return override_state["success"]
