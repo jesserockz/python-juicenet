@@ -165,3 +165,26 @@ class Charger:
         self.update_state(True)
 
         return override_state["success"]
+
+    def stopCharging(self):
+        override_time = 0
+        energy_at_plugin = 0
+        energy_to_add = 0
+
+        # First, (re)load state in case it's empty or stale
+        self.update_state(True)
+        override_time = self.json_state["unit_time"]
+
+        # energy_to_add should be the amount that already was added
+        energy_to_add = self.json_state["charging"]["wh_energy"]
+
+        # If there has been no charge at all, then set the limit to 1, because 0 means no limit
+        if energy_to_add == 0:
+            energy_to_add = 1
+
+        override_state = self.api.set_override(self, override_time, energy_at_plugin, energy_to_add)
+
+        # Update state again to show current override status
+        self.update_state(True)
+
+        return override_state["success"]
