@@ -26,6 +26,9 @@ class Api:
                                  data=json.dumps(data),
                                  headers=headers)
         response_json = response.json()
+        if not response_json.get("success"):
+            raise ValueError(response_json.get("error_message"))
+
         units_json = response_json.get("units")
         devices = []
         for unit in units_json:
