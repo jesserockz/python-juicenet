@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='python-juicenet',
-      version='0.1.6',
+      version='0.1.7',
       description='Read and control Juicenet/Juicepoint/Juicebox based EVSE devices',
       url='http://github.com/jesserockz/python-juicenet',
       author='Jesse Hills',
