@@ -1,0 +1,13 @@
+language: python
+python:
+  - 3.5.3
+
+deploy:
+  provider: pypi
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
+  user: __token__
+  password:
+    secure: ZJoQ2jWkep5ROUfWYPO08IN6PzBGHNVrGzI+oscsHGcrbq+pc1MOCjSScmDh7kuSYrsAKGyIGV/gwcrd4c/bu3g8XAALfhBvpoFvX6MdfcIiy2ALnT6bC+XO55xfmUUFoHyiVJaJiuOTBzNdsKoVJS6BQw8j/pIwa/9dwQhSvt/4F+m9H7hocsLgC6tupqOsrsfOuD6F9OC1+040N5VoUdZo+/27wwufAMcuLS4ku9SbXEDt3rO7jELlwztwLIMmrEgb0bFycxYWKOYv5fhAvTBeJfcolDEkKmEh8zQv8fCYA5NTdBFE5YFiSD1OGrvomb/hGk7spOd6raztOajLo9HeoZhAni9ETMHpxgq5VGFrxkcldczlaKN3ygrsXHaC1BNYu+LelulbkDSO9Hxt0EOrRDPBLrnPspspoa/S3T5DQYpy3Pec149mTn20KqMRXSL+3XJsv30dpyW+li7RVCIVOw/vvSMxFNCTCd6MwsAtZ82IImy94gOUNi039Vy4OabJqxUvYNdhvxrLSeaE/slrr5w+qiwONeGMdHl1jMCm629V3IUqvP0LsF0RxjN3BWPsyfD40CKNPnRqkfOrwKWtCkNHkgD9HslIc7UjIJAxIHdcWOzkIjqCgw6s0SnTAKVAEQ6FgsISVeT5LH3jGykQJYO8tTe2UsiKx6hgllg=
+    on:
+      tags: true
