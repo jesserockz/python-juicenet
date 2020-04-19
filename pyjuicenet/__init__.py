@@ -153,7 +153,7 @@ class Api:
             "account_token": self.api_token
         }
         response = await self.session.post(
-            f"{BASE_URL}/box_pin", json=data
+            f"{BASE_URL}/box_pin", json=data,
         )
         response_json = await response.json()
 
