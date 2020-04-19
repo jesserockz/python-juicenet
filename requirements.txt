@@ -1,2 +1,4 @@
-requests
+aiohttp
+asyncio
 flake8
+async_timeout
