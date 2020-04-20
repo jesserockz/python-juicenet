@@ -12,7 +12,7 @@ import pyjuicenet
 
 async def main():
   async with aiohttp.ClientSession() as session:
-    api = pyjuicenet.Api('ACCESS_TOKEN')
+    api = pyjuicenet.Api('ACCESS_TOKEN', session)
     devices = await api.get_devices()
     charger = devices[0]
     await charger.update_state()
