@@ -107,10 +107,9 @@ class Charger:
             # normally the complete battery capacity of the vehicle.
             energy_to_add = self.json_state["charging"]["wh_energy_to_add"]
 
-        override_state = self.api.set_override(self,
-                                               override_time,
-                                               energy_at_plugin,
-                                               energy_to_add)
+        override_state = await self.api.set_override(
+            self, override_time, energy_at_plugin, energy_to_add
+        )
 
         # Update state again to show current override status
         await self.update_state(True)
