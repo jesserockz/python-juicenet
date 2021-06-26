@@ -18,6 +18,7 @@ class Charger:
         """Create a Charger."""
         self.json_settings = json_settings
         self.json_state = {}
+        self.json_info = {}
         self.api = api
         self.last_updated_at = 0
 
@@ -37,13 +38,19 @@ class Charger:
         return self.json_settings.get("unit_id")
 
     async def update_state(self, force=False) -> bool:
-        """Update state with latest info from API."""
+        """Update cached state with latest state from API."""
         if not force and time.time() - self.last_updated_at < 30:
             return True
         self.last_updated_at = time.time()
         json_state = await self.api.get_device_state(self)
         self.json_state = json_state
         return json_state["success"]
+
+    async def update_info(self) -> bool:
+        """Update the cached charger info with latest info from the API."""
+        json_info = await self.api.get_info(self)
+        self.json_info = json_info
+        return json_info["success"]
 
     @property
     def voltage(self) -> int:
@@ -84,6 +91,13 @@ class Charger:
     def override_time(self) -> int:
         """Get the override time."""
         return self.json_state.get("override_time")
+
+    async def set_max_current(self, current: int) -> bool:
+        """
+        Set the maximum charging current in amps. This is currently implemented by updating the amps_wire_rating
+        property on the get_info call, as changes made using the set_limit api call seem to get automatically reverted
+        after a few seconds."""
+        return await self.api.set_info(self, current)
 
     async def set_override(self, charge_now) -> bool:
         """Set to override schedule or not."""
@@ -193,6 +207,34 @@ class Api:
 
         response = await self.session.post(
             f"{BASE_URL}/box_api_secure", json=data,
+        )
+        return await response.json()
+
+    async def set_info(
+        self,
+        charger: Charger,
+        max_current: int
+    ):
+        # Because the set_info command appears to update all parameters, even the ones we don't specify, and sets
+        # unspecified parameters to null/empty, we will first get their current values, and then include those in the
+        # request. Concurrent modification is a potential problem, but an unlikely one, as the copied parameters are
+        # unlikely to be changed.
+        if not charger.json_info:
+            await charger.update_info()
+
+        keys_to_copy = ["timeZoneId", "name", "address", "zip", "city", "country_code"]
+        data = {
+            "device_id": self.uuid,
+            "cmd": "set_info",
+            "token": charger.token,
+            "account_token": self.api_token,
+            "amps_wire_rating": max_current,
+        }
+        for key in keys_to_copy:
+            data[key] = charger.json_info.get(key)
+
+        response = await self.session.post(
+            f"{BASE_URL}/box_api_secure", json=data
         )
         return await response.json()
 
