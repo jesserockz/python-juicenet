@@ -17,6 +17,7 @@ class Charger:
     def __init__(self, json_settings, api):
         """Create a Charger."""
         self.json_settings = json_settings
+        self.json_info = {}
         self.json_state = {}
         self.api = api
         self.last_updated_at = 0
@@ -44,6 +45,13 @@ class Charger:
         json_state = await self.api.get_device_state(self)
         self.json_state = json_state
         return json_state["success"]
+
+    async def update_info(self) -> bool:
+        """Update device info with latest info from API."""
+        self.last_updated_at = time.time()
+        json_info = await self.api.get_info(self)
+        self.json_info = json_info
+        return json_info["success"]
 
     @property
     def voltage(self) -> int:
@@ -84,6 +92,26 @@ class Charger:
     def override_time(self) -> int:
         """Get the override time."""
         return self.json_state.get("override_time")
+
+    @property
+    def max_charging_amperage(self) -> int:
+        """Get the maximum charging limit time from the smaller of the wire rating and unit rating."""
+        return min(self.json_info.get("amps_wire_rating"), self.json_info.get("amps_unit_rating"))
+
+    @property
+    def current_charging_amperage_limit(self) -> int:
+        """Get the current amperage charging limit for the charger."""
+        return self.json_state.get("charging", {}).get("amps_limit")
+
+    async def set_charging_amperage_limit(self, amperage: int) -> bool:
+        """Set the amperage limit of the charger. 0 will disable the charger."""
+        response = await self.api.set_limit(self, amperage)
+
+        # Update state so that the amperage limit is correctly reflected
+        if response['success']:
+            await self.update_state(True)
+
+        return response['success']
 
     async def set_override(self, charge_now) -> bool:
         """Set to override schedule or not."""
@@ -164,6 +192,7 @@ class Api:
         for unit in units_json:
             device = Charger(unit, self)
             await device.update_state()
+            await device.update_info()
             devices.append(device)
 
         return devices
@@ -188,6 +217,35 @@ class Api:
             "device_id": self.uuid,
             "cmd": "get_info",
             "token": charger.token,
+            "account_token": self.api_token
+        }
+
+        response = await self.session.post(
+            f"{BASE_URL}/box_api_secure", json=data,
+        )
+        return await response.json()
+
+    async def get_commands(self, charger: Charger):
+        """Fetch more info about the charger."""
+        data = {
+            "cmd": "list_commands",
+            "device_id": self.uuid,
+            "token": charger.token,
+            "account_token": self.api_token
+        }
+
+        response = await self.session.post(
+            f"{BASE_URL}/box_api_secure", json=data,
+        )
+        return await response.json()
+
+    async def set_limit(self, charger: Charger, amperage_limit: int):
+        """Set the amperage limit of the charger. 0 will disable the charger."""
+        data = {
+            "cmd": "set_limit",
+            "device_id": self.uuid,
+            "token": charger.token,
+            "amperage": amperage_limit,
             "account_token": self.api_token
         }
 
