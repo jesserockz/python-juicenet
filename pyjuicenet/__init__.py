@@ -95,13 +95,19 @@ class Charger:
 
     @property
     def max_charging_amperage(self) -> int:
-        """Get the maximum charging limit time from the smaller of the wire rating and unit rating."""
+        """Get the maximum charging limit time from the smaller of the wire rating and unit rating.
+        This can be used along with set limit to enable the charger at full capacity"""
         return min(self.json_info.get("amps_wire_rating"), self.json_info.get("amps_unit_rating"))
 
     @property
     def current_charging_amperage_limit(self) -> int:
         """Get the current amperage charging limit for the charger."""
         return self.json_state.get("charging", {}).get("amps_limit")
+
+    @property
+    def charger_enabled(self) -> bool:
+        """Is the charger allowing amps to flow."""
+        return self.current_charging_amperage_limit > 0
 
     async def set_charging_amperage_limit(self, amperage: int) -> bool:
         """Set the amperage limit of the charger. 0 will disable the charger."""
@@ -112,6 +118,14 @@ class Charger:
             await self.update_state(True)
 
         return response['success']
+
+    async def enable_charger(self):
+        """Enable charger for max support amperage"""
+        return await self.set_charging_amperage_limit(self.max_charging_amperage)
+
+    async def disable_charger(self):
+        """Disable all charging activity"""
+        return await self.set_charging_amperage_limit(0)
 
     async def set_override(self, charge_now) -> bool:
         """Set to override schedule or not."""
