@@ -239,20 +239,6 @@ class Api:
         )
         return await response.json()
 
-    async def get_commands(self, charger: Charger):
-        """Fetch more info about the charger."""
-        data = {
-            "cmd": "list_commands",
-            "device_id": self.uuid,
-            "token": charger.token,
-            "account_token": self.api_token
-        }
-
-        response = await self.session.post(
-            f"{BASE_URL}/box_api_secure", json=data,
-        )
-        return await response.json()
-
     async def set_limit(self, charger: Charger, amperage_limit: int):
         """Set the amperage limit of the charger. 0 will disable the charger."""
         data = {
