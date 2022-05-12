@@ -97,7 +97,10 @@ class Charger:
     def max_charging_amperage(self) -> int:
         """Get the maximum charging limit time from the smaller of the wire rating and unit rating.
         This can be used along with set limit to enable the charger at full capacity"""
-        return min(self.json_info.get("amps_wire_rating"), self.json_info.get("amps_unit_rating"))
+        return min(
+            self.json_info.get("amps_wire_rating"),
+            self.json_info.get("amps_unit_rating"),
+        )
 
     @property
     def current_charging_amperage_limit(self) -> int:
@@ -114,10 +117,10 @@ class Charger:
         response = await self.api.set_limit(self, amperage)
 
         # Update state so that the amperage limit is correctly reflected
-        if response['success']:
+        if response["success"]:
             await self.update_state(True)
 
-        return response['success']
+        return response["success"]
 
     async def enable_charger(self):
         """Enable charger for max support amperage"""
@@ -162,15 +165,12 @@ class Charger:
 class Api:
     """Api represents the connection to the Juicenet server."""
 
-    def __init__(
-            self,
-            api_token: str,
-            session: aiohttp.ClientSession = None
-    ):
+    def __init__(self, api_token: str, session: aiohttp.ClientSession = None):
         """Create an instance."""
         self.api_token = api_token
         self.uuid = str(uuid.uuid4())
         if not session:
+
             async def _create_session() -> aiohttp.ClientSession:
                 return aiohttp.ClientSession()
 
@@ -186,15 +186,16 @@ class Api:
         """Close the aiohtto session."""
         await self.session.close()
 
-    async def get_devices(self):
+    async def get_devices(self) -> list[Charger]:
         """Fetch the device list."""
         data = {
             "device_id": self.uuid,
             "cmd": "get_account_units",
-            "account_token": self.api_token
+            "account_token": self.api_token,
         }
         response = await self.session.post(
-            f"{BASE_URL}/box_pin", json=data,
+            f"{BASE_URL}/box_pin",
+            json=data,
         )
         response_json = await response.json()
 
@@ -217,11 +218,12 @@ class Api:
             "device_id": self.uuid,
             "cmd": "get_state",
             "token": charger.token,
-            "account_token": self.api_token
+            "account_token": self.api_token,
         }
 
         response = await self.session.post(
-            f"{BASE_URL}/box_api_secure", json=data,
+            f"{BASE_URL}/box_api_secure",
+            json=data,
         )
         return await response.json()
 
@@ -231,11 +233,12 @@ class Api:
             "device_id": self.uuid,
             "cmd": "get_info",
             "token": charger.token,
-            "account_token": self.api_token
+            "account_token": self.api_token,
         }
 
         response = await self.session.post(
-            f"{BASE_URL}/box_api_secure", json=data,
+            f"{BASE_URL}/box_api_secure",
+            json=data,
         )
         return await response.json()
 
@@ -246,11 +249,12 @@ class Api:
             "device_id": self.uuid,
             "token": charger.token,
             "amperage": amperage_limit,
-            "account_token": self.api_token
+            "account_token": self.api_token,
         }
 
         response = await self.session.post(
-            f"{BASE_URL}/box_api_secure", json=data,
+            f"{BASE_URL}/box_api_secure",
+            json=data,
         )
         return await response.json()
 
@@ -259,7 +263,7 @@ class Api:
         charger: Charger,
         override_time: int,
         energy_at_plugin: int,
-        energy_to_add: int
+        energy_to_add: int,
     ):
         """Set the override for the charging schedule."""
         data = {
@@ -269,11 +273,12 @@ class Api:
             "account_token": self.api_token,
             "override_time": override_time,
             "energy_at_plugin": energy_at_plugin,
-            "energy_to_add": energy_to_add
+            "energy_to_add": energy_to_add,
         }
 
         response = await self.session.post(
-            f"{BASE_URL}/box_api_secure", json=data,
+            f"{BASE_URL}/box_api_secure",
+            json=data,
         )
         return await response.json()
 
