@@ -1,3 +1,12 @@
+# Archived 
+
+The juicenet API has been shut down.
+
+There are multiple open source projects available to receive data and control charging directly via UDP.
+
+- https://github.com/JuiceRescue/juicepassproxy
+
+
 # Python Juicenet
 
 Access to the Juicenet EVSE charger API
